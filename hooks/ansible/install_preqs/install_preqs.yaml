@@ -1,0 +1,70 @@
+---
+- hosts: example
+  remote_user: root
+  tasks:
+    - name: "Install basic yum packages"
+      yum:
+        name: "{{ item }}"
+        state: "latest"
+        update_cache: yes
+      with_items:
+        - yum-utils
+        - net-tools
+        - epel-release
+
+    - name: "Install basic development tools"
+      yum:
+        name: "{{ item }}"
+        state: "latest"
+      with_items:
+        - python-devel 
+        - openssl-devel
+        - gcc
+        - python-pip
+        - git
+        - libselinux-python
+        - libffi-devel
+        - redhat-rpm-config
+
+    - name: "Install docker ce"
+      yum:
+        name: "docker"
+        state: "present"
+
+    - name: "Install libvirtd and dependencies"
+      yum:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - qemu-kvm
+        - kvm
+        - qemu-img
+        - virt-manager
+        - libvirt
+        - libvirt-python
+        - libvirt-client
+        - virt-install
+        - virt-viewer
+        - bridge-utils
+        - genisoimage
+
+    - name: "Install pip packages for docker"
+      pip:
+        name: "docker-py"
+
+    - name: "start and enable libvirt "
+      service:
+        name: "libvirtd"
+        state: "started"
+        enabled: yes
+
+    - name: "start and enable docker"
+      service:
+        name: "docker"
+        state: "started"
+        enabled: yes
+
+    - name: "Install ansible via pip for linchpin"
+      pip:
+        name: ansible
+        version: 2.2.1

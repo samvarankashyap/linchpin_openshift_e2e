@@ -1,0 +1,22 @@
+#The following example illustrates the PinFile
+#
+#SYNTAX:
+#
+#target:
+#    topology: <string>
+#    inventory: <string>
+
+#duffy_3node_target:
+#  topology: duffy_3node.yml
+#  layout: 3node_layout.yml
+
+duffy:
+  topology: duffy_1node.yml
+  layout: 1node_layout.yml
+  hooks:
+    postup:
+      - name: install_preqs
+        type: ansible
+        actions:
+          - playbook: install_preqs.yaml
+          - playbook: install_linchpin.yaml
