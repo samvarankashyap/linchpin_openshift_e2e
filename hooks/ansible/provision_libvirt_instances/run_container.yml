@@ -1,0 +1,57 @@
+---
+- name: "Run linchpin_libvirt container"
+  hosts: example
+  remote_user: root
+  tasks:
+    - name: "Create directory"
+      file:
+        path: "/tmp/linchpintest"
+        state: directory
+    - name: "Create the docker container for linchpin"
+      docker_container:
+        name: mylibvirtrun
+        image: samvaran/linchpin_libvirt_container
+        volumes:
+          - /tmp/linchpintest:/tmp/linchpintest:z
+        command: 'tail -f /dev/null'
+        detach: yes
+    - name: "Run linchpin init"
+      docker_exec:
+        command: "linchpin -w /tmp/linchpintest/ init"
+        name: mylibvirtrun
+      ignore_errors: yes
+    - name: "Template out Pinfile"
+      template:
+        src: PinFile
+        dest: /tmp/linchpintest/PinFile
+    - name: "Template out topology"
+      template:
+        src: example-topology.yml
+        dest: /tmp/linchpintest/topologies/example-topology.yml
+    - name: "Template out layout"
+      template:
+        src: example-layout.yml
+        dest: /tmp/linchpintest/layouts/example-layout.yml
+    - name: "Docker exec for running"
+      docker_exec:
+        command: "cat /root/.ssh/id_rsa.pub"
+        name: mylibvirtrun
+      register: exec_output
+    - name: "Add line to authorized keys"
+      lineinfile:
+        dest: "/root/.ssh/authorized_keys"
+        line: "{{ exec_output.result | strip('\n')  }}"
+    - name: "Run command in container"
+      docker_exec:
+        command: "linchpin -v -w /tmp/linchpintest/ up"
+        name: mylibvirtrun
+      register: linchpinup_output
+    - name: "Debug out linchpinup"
+      debug:
+        msg: "{{ linchpinup_output }}"
+    - name: "Delete the libvirt container"
+      docker_container:
+        name: mylibvirtrun
+        state: absent
+        keep_volumes: yes
+        force_kill: yes

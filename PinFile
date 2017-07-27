@@ -19,4 +19,7 @@ duffy:
         type: ansible
         actions:
           - playbook: install_preqs.yaml
-          - playbook: install_linchpin.yaml
+      - name: provision_libvirt_instances
+        type: ansible
+        actions:
+          - playbook: run_container.yml
