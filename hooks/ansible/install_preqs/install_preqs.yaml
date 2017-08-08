@@ -25,6 +25,8 @@
         - libselinux-python
         - libffi-devel
         - redhat-rpm-config
+        - wget
+        - bash-completion
 
     - name: "Install docker ce"
       yum:
