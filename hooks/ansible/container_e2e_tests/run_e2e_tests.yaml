@@ -1,0 +1,32 @@
+---
+- hosts: example
+  remote_user: root
+  tasks:
+    - name: "Pull docker-paas-sig-ci container"
+      docker_container:
+        name: e2erunner
+        image: samvaran/docker-paas-sig-ci
+        volumes:
+          - /tmp/:/tmp/:z
+          - /etc/hosts:/etc/hosts:z
+          - /tmp/resolv.conf:/etc/resolv.conf:z
+        command: 'tail -f /dev/null'
+        detach: yes
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: False
+    - name: "Docker copy ssh keys to docker "
+      shell: "docker cp /root/.ssh e2erunner:/root/.ssh"
+    - name: "Run command in container"
+      docker_exec:
+        command: "ansible-playbook -i /tmp/singlenode.inv --private-key /root/.ssh/ex playbooks/byo/config.yml -e'containerrun=true'"
+        name: e2erunner
+      register: e2eoutput
+    - name: "Debug openshift runner output"
+      debug:
+        msg: "{{ e2eoutput.result }}"
+    - name: "Delete the e2e container"
+      docker_container:
+        name: e2erunner
+        state: absent
+        keep_volumes: yes
+        force_kill: yes

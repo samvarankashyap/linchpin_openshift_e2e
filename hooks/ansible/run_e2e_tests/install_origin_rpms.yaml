@@ -1,0 +1,44 @@
+---
+- hosts: example
+  remote_user: root
+  tasks:
+    - name: "RPM's list"
+      debug:
+        msg: "{{ item }}"
+      with_items:
+        - "{{ origin_clients_rpm_url }}"
+        - "{{ origin_rpm_url }}"
+        - "{{ origin_tests_rpm_url }}"
+    - name: "Download rpms to /tmp/"
+      get_url:
+        url: "{{ item }}"
+        dest: /tmp/
+      with_items:
+        - "{{ origin_clients_rpm_url }}"
+        - "{{ origin_rpm_url }}"
+        - "{{ origin_tests_rpm_url }}"
+    - name: "Install rpms"
+      shell: "rpm -ivh /tmp/{{ item | basename }} --force"
+      with_items:
+        - "{{ origin_clients_rpm_url }}"
+        - "{{ origin_rpm_url }}"
+        - "{{ origin_tests_rpm_url }}"
+    - name: "Fetch the kubeconfig from inventory "
+      shell: "ansible -i /tmp/linchpintest/inventories/libvirt.inventory all -u admin --become --private-key ~/.ssh/ex -m fetch -a\"src=/etc/origin/master/admin.kubeconfig dest=/tmp/admin.kubeconfig flat=yes\""
+      environment:
+        ANSIBLE_HOST_KEY_CHECKING: False
+    - name: "Run the e2e tests"
+      shell: KUBECONFIG=/tmp/admin.kubeconfig /usr/libexec/origin/extended.test --ginkgo.v=True --ginkgo.skip="should becomes" --ginkgo.focus="EmptyDir" 1>/tmp/e2e.log 2>&1
+      environment:
+        ANSIBLE_HOST_KEY_CHECKING: False
+    - name: "Get tail output of e2e.log"
+      shell: "tail /tmp/e2e.log"
+      register: e2e_output
+    - name: "Get the e2e output"
+      debug:
+        msg: "{{ e2e_output }}"
+    - name: "Fetch e2e output to localhost"
+      fetch:
+        src: /tmp/e2e.log
+        dest: /tmp/e2e.log
+        flat: yes
