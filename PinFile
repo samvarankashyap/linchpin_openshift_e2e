@@ -23,3 +23,7 @@ duffy:
         type: ansible
         actions:
           - playbook: run_container.yml
+      - name: install_openshift
+        type: ansible
+        actions:
+          - playbook: install_openshift.yaml
