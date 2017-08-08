@@ -1,0 +1,81 @@
+---
+- hosts: example
+  remote_user: root
+  tasks:
+    - name: "cat inventory"
+      shell: "cat /tmp/linchpintest/inventories/libvirt.inventory"
+      register: inventory_output
+    - name: "debug: inventory"
+      debug:
+        msg: "{{ inventory_output.stdout | get_first_ip }}"
+    - name: "Set fact for ip_address"
+      set_fact:
+        ipaddr: "{{ inventory_output.stdout | get_first_ip  }}"
+    - name: "enable the network service"
+      shell: "ansible -i /tmp/linchpintest/inventories/libvirt.inventory all -u admin --become --private-key ~/.ssh/ex -a\"systemctl enable network\""
+      environment:
+        ANSIBLE_HOST_KEY_CHECKING: False
+    - name: "Start the network service"
+      shell: "ansible -i /tmp/linchpintest/inventories/libvirt.inventory all -u admin --become --private-key ~/.ssh/ex -a\"systemctl start network\""
+      environment:
+        ANSIBLE_HOST_KEY_CHECKING: False
+    - name: "Create /etc/hosts record for ip on host"
+      shell: "ansible -i /tmp/linchpintest/inventories/libvirt.inventory all -u admin --become --private-key ~/.ssh/ex -m copy -a\"src=/etc/hosts dest=/tmp/hosts remote_src=true\""
+      environment:
+        ANSIBLE_HOST_KEY_CHECKING: False
+    - name: "Add ip to /etc/hosts file "
+      shell: ansible -i /tmp/linchpintest/inventories/libvirt.inventory all -u admin --become --private-key ~/.ssh/ex -m lineinfile  -a"line='{{ ipaddr }} atomic01 atomic01.example.com' destfile='/etc/hosts' state='present'"
+      environment:
+        ANSIBLE_HOST_KEY_CHECKING: False
+    - name: "Add ip to /etc/hosts file "
+      shell: ansible -i /tmp/linchpintest/inventories/libvirt.inventory localhost -m lineinfile  -a"line='{{ ipaddr }} atomic01 atomic01.example.com' destfile='/etc/hosts' state='present'"
+      environment:
+        ANSIBLE_HOST_KEY_CHECKING: False
+    - name: "Use ansible adhoc command to hostnamectl set-hostname to atomic01.example.com"
+      shell: "ansible -i /tmp/linchpintest/inventories/libvirt.inventory all -u admin --become --private-key ~/.ssh/ex -a \"hostnamectl set-hostname atomic01.example.com\""
+      environment:
+        ANSIBLE_HOST_KEY_CHECKING: False
+    - name: "Generate single node deployment inventory"
+      template:
+        src: singlenode.j2
+        dest: /tmp/singlenode.inv
+    - name: "copy resolve.conf to tmp"
+      copy:
+        src: /etc/resolv.conf
+        dest: /tmp/resolv.conf
+        remote_src: true
+    - name: "Add libvirt /tmp/resolv.conf"
+      shell: ansible localhost -m lineinfile  -a"line=\"search example.com\nnameserver 192.168.122.1\" destfile='/tmp/resolv.conf' state='present'"
+      environment:
+        ANSIBLE_HOST_KEY_CHECKING: False
+    - name: "Pull docker-openshift-ansible container"
+      docker_container:
+        name: myopenshiftrunner
+        image: samvaran/docker-openshift-ansible
+        volumes:
+#          - /root/.ssh:/root/.ssh:z
+          - /tmp/:/tmp/:z
+          - /etc/hosts:/etc/hosts:z
+          - /tmp/resolv.conf:/etc/resolv.conf:z
+        command: 'tail -f /dev/null'
+        detach: yes
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: False
+#    # this should come after pre setup
+    - name: "Docker copy ssh keys to docker "
+      shell: "docker cp /root/.ssh myopenshiftrunner:/root/.ssh"
+#    - name: "Run command for installing openshift"
+    - name: "Run command in container"
+      docker_exec:
+        command: "ansible-playbook -i /tmp/singlenode.inv --private-key /root/.ssh/ex playbooks/byo/config.yml -e'openshift_disable_check=disk_availability,docker_storage,memory_availability' -e 'ansible_python_interpreter=/usr/bin/python3'"
+        name: myopenshiftrunner
+      register: openshift_output 
+    - name: "Debug openshift runner output"
+      debug:
+        msg: "{{ openshift_output.result }}"
+    - name: "Delete the openshift runner container"
+      docker_container:
+        name: myopenshiftrunner
+        state: absent
+        keep_volumes: yes
+        force_kill: yes
