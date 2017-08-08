@@ -1,15 +1,3 @@
-#The following example illustrates the PinFile
-#
-#SYNTAX:
-#
-#target:
-#    topology: <string>
-#    inventory: <string>
-
-#duffy_3node_target:
-#  topology: duffy_3node.yml
-#  layout: 3node_layout.yml
-
 duffy:
   topology: duffy_1node.yml
   layout: 1node_layout.yml
@@ -27,3 +15,20 @@ duffy:
         type: ansible
         actions:
           - playbook: install_openshift.yaml
+      #- name: run_e2e_tests
+      #  type: ansible
+      #  actions:
+      #    - playbook: install_origin_rpms.yaml
+      #      extra_vars:
+      #        origin_clients_rpm_url: "https://cbs.centos.org/repos/paas7-openshift-origin36-testing/x86_64/os/Packages/origin-clients-3.6.0-1.0.c4dd4cf.x86_64.rpm"
+      #        origin_rpm_url: "https://cbs.centos.org/repos/paas7-openshift-origin36-testing/x86_64/os/Packages/origin-3.6.0-1.0.c4dd4cf.x86_64.rpm"
+      #        origin_tests_rpm_url: "https://cbs.centos.org/repos/paas7-openshift-origin36-testing/x86_64/os/Packages/origin-tests-3.6.0-1.0.c4dd4cf.x86_64.rpm"
+      - name: container_e2e_tests
+        type: ansible
+        actions:
+          - playbook: run_e2e_tests.yaml 
+      - name: display_results
+        type: shell
+        context: false
+        actions:
+          - tail /tmp/e2e.log
