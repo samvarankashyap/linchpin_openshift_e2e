@@ -18,15 +18,23 @@
       shell: "docker cp /root/.ssh e2erunner:/root/.ssh"
     - name: "Run command in container"
       docker_exec:
-        command: "ansible-playbook -i /tmp/singlenode.inv --private-key /root/.ssh/ex playbooks/byo/config.yml -e'containerrun=true'"
+        command: "ansible-playbook -i /tmp/singlenode.inv --private-key /root/.ssh/ex playbooks/openshift/run_e2e_tests.yml -e'containerrun=true'"
         name: e2erunner
       register: e2eoutput
-    - name: "Debug openshift runner output"
-      debug:
-        msg: "{{ e2eoutput.result }}"
     - name: "Delete the e2e container"
       docker_container:
         name: e2erunner
         state: absent
         keep_volumes: yes
         force_kill: yes
+    - name: "Delete e2e file if exists on localhost"
+      file:
+        state: absent
+        path: "/tmp/e2e.log"
+      delegate_to: localhost
+    - name: "Fetch the file to localhost for display"
+      fetch:
+        src: /tmp/e2e.log
+        dest: /tmp/e2e.log
+        flat: yes
+      
