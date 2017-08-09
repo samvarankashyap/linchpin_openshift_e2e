@@ -12,7 +12,8 @@ resource_groups:
         remote_user: "root"
         count: 1
         driver: qemu
-        image_src: 'https://dl.fedoraproject.org/pub/alt/atomic/stable/Fedora-Atomic-25-20170522.0/CloudImages/x86_64/images/Fedora-Atomic-25-20170522.0.x86_64.qcow2'
+        #image_src: 'https://dl.fedoraproject.org/pub/alt/atomic/stable/Fedora-Atomic-25-20170522.0/CloudImages/x86_64/images/Fedora-Atomic-25-20170522.0.x86_64.qcow2'
+        image_src: 'https://pubmirror2.math.uh.edu/fedora-buffet/alt/atomic/stable/Fedora-Atomic-25-20170705.0/CloudImages/x86_64/images/Fedora-Atomic-25-20170705.0.x86_64.qcow2'
         memory: 6096 
         vcpus: 3
         arch: x86_64
