@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: "Delete e2e.log if exists"
+      file:
+        state: absent
+        path: "/tmp/e2e.log"
+
+- hosts: example
+  remote_user: root
+  tasks:
+    - name: "Fetch the file to localhost for display"
+      fetch:
+        src: /tmp/e2e.log
+        dest: /tmp/e2e.log
+        flat: yes
