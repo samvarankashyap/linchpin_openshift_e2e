@@ -1,0 +1,27 @@
+node('jenkins-continuous-infra-slave') {
+    timestamps {
+        stage "Clone duffy pipeline wrapper"
+        git branch: 'master', url: 'https://github.com/samvarankashyap/duffy_pipeline_wrapper'
+        
+        stage "Setting up authentication for fedora-ci"
+        sh "mkdir -p ~/.ssh/"
+        withCredentials([file(credentialsId: 'FEDORA_ATOMIC_KEY', variable: 'FATOMIC')]) {
+            sh 'cat $FATOMIC > ~/.ssh/id_rsa'
+        }
+        withCredentials([file(credentialsId: 'FEDORA_KNOWN_HOSTS', variable: 'FATOMIC_KH')]) {
+            sh 'cat $FATOMIC_KH > ~/.ssh/known_hosts'
+        }
+        withCredentials([file(credentialsId: 'FEDORA_SSH_CONFIG', variable: 'FATOMIC_CONF')]) {
+            sh 'cat $FATOMIC_CONF > ~/.ssh/config'
+        }
+    sh "chmod 600 ~/.ssh/config ~/.ssh/id_rsa"
+    sh "chmod 644 ~/.ssh/known_hosts"
+    
+    stage "Checking ssh connection to fedora-atomic-ci"
+    sh "ssh -v fedora-atomic@fedora-atomic.ci.centos.org ls"
+    stage "Initiate linchpin run"
+    sh "export ANSIBLE_HOST_KEY_CHECKING=False;ansible-playbook -vvv -i inv run_linchpin.yml" 
+    sh "cat e2e.log"
+    archiveArtifacts artifacts: '*'
+    }
+}
