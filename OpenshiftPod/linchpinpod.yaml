@@ -1,0 +1,19 @@
+apiVersion: v1
+id: linchpinlibv
+kind: Pod
+metadata: 
+  name: linchyasd
+spec: 
+  containers: 
+    - name: linchylib
+      image: samvaran/linchpin_libvirt
+      securityContext: 
+        privileged: true
+      readOnlyRootFilesystem: false
+      volumeMounts:
+        - mountPath: /sys/class/net
+          name: sysfs
+  volumes:
+    - name: sysfs
+      persistentVolumeClaim:
+        claimName: sysfs
