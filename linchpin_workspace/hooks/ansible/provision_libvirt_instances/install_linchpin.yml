@@ -1,7 +1,0 @@
----
-- hosts: example
-  remote_user: root
-  tasks:
-    - name: "Install linchpin"
-      pip:
-        name: "linchpin"

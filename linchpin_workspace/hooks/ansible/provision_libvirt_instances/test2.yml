@@ -1,9 +1,0 @@
----
-- hosts: localhost
-  connection: local
-  tasks:
-    - set_fact:
-        test: "123456"
-    - debug:
-        msg: "{{ test | get_char(3) }}"
-

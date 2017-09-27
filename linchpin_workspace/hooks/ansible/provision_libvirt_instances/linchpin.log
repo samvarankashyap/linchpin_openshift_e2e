@@ -1,4 +1,0 @@
-DEBUG 2017-07-27 17:58:10,785 ctx.workspace: /home/fedora-atomic/sk_workspace/lpduffy/linchtest/hooks/ansible/provision_libvirt_instances
-DEBUG 2017-07-27 17:58:10,788 from_api: True
-DEBUG 2017-07-27 18:28:35,313 ctx.workspace: /home/fedora-atomic/sk_workspace/lpduffy/linchtest/hooks/ansible/provision_libvirt_instances
-DEBUG 2017-07-27 18:28:35,315 from_api: True
